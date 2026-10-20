@@ -1,0 +1,19 @@
+{
+  "name": "chat-peninsular",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mensajería interna self-hosted para equipos pequeños",
+  "scripts": {
+    "dev": "pnpm --filter @chat-peninsular/types build && concurrently -n web,server -c green,blue \"pnpm --filter @chat-peninsular/web dev\" \"pnpm --filter @chat-peninsular/server dev\"",
+    "build": "pnpm --filter @chat-peninsular/types build && pnpm --filter @chat-peninsular/server build && pnpm --filter @chat-peninsular/web build",
+    "typecheck": "pnpm --filter @chat-peninsular/types typecheck && pnpm --filter @chat-peninsular/server typecheck && pnpm --filter @chat-peninsular/web typecheck",
+    "test": "echo \"No hay tests aún (hito 1)\" && exit 0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "packageManager": "pnpm@11.5.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Roles
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum ChannelRole {
+  MODERATOR
+  MEMBER
+}
+
+// ---------------------------------------------------------------------------
+// Usuarios, sesiones y autenticación
+// ---------------------------------------------------------------------------
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String
+  avatarUrl String?
+  role      Role      @default(MEMBER)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  lastSeenAt DateTime?
+
+  invitations     Invitation[]     @relation("InvitedBy")
+  sessions        Session[]
+  messages        Message[]
+  memberships     ChannelMember[]
+  channelsCreated Channel[]        @relation("CreatedBy")
+  dmAsUser1       DirectMessage[]  @relation("DmUser1")
+  dmAsUser2       DirectMessage[]  @relation("DmUser2")
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  email       String
+  token       String    @unique
+  invitedById String
+  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id])
+  usedAt      DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model MagicLink {
+  id        String    @id @default(cuid())
+  email     String
+  token     String    @unique
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Canales
+// ---------------------------------------------------------------------------
+
+model Channel {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  isPrivate   Boolean   @default(false)
+  isArchived  Boolean   @default(false)
+  createdById String
+  createdBy   User      @relation("CreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members  ChannelMember[]
+  messages Message[]
+}
+
+model ChannelMember {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   Channel     @relation(fields: [channelId], references: [id])
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  role      ChannelRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+
+  @@unique([channelId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Mensajes y conversaciones directas
+// ---------------------------------------------------------------------------
+
+model DirectMessage {
+  id        String   @id @default(cuid())
+  user1Id   String
+  user1     User     @relation("DmUser1", fields: [user1Id], references: [id])
+  user2Id   String
+  user2     User     @relation("DmUser2", fields: [user2Id], references: [id])
+  createdAt DateTime @default(now())
+
+  messages Message[]
+
+  @@unique([user1Id, user2Id])
+}
+
+model Message {
+  id        String    @id @default(cuid())
+  content   String?
+  imageUrl  String?
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+
+  // Uno de los dos (channelId o dmId) debe estar presente, no ambos.
+  channelId String?
+  channel   Channel?  @relation(fields: [channelId], references: [id])
+  dmId      String?
+  dm        DirectMessage? @relation(fields: [dmId], references: [id])
+
+  editedAt  DateTime?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([channelId, createdAt])
+  @@index([dmId, createdAt])
+}

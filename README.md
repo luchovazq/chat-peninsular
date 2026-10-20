@@ -42,7 +42,7 @@ Chat Peninsular es un chat interno para equipos de hasta ~20 personas que quiere
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/[usuario]/chat-peninsular.git
+git clone https://github.com/luchovazq/chat-peninsular.git
 cd chat-peninsular
 
 # 2. Instalar dependencias
